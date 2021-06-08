@@ -1,0 +1,107 @@
+{% extends "base.html" %} 
+
+{% block content %}
+
+    <link rel="stylesheet" href="{{url_for('static',filename='css/home.css')}}">
+
+    <link rel="stylesheet" href="/static/css/home.css">
+
+    <div class="global_cont_home">
+        <div class="container mt-5">
+
+            <div class="card mx-auto d-block card_home">
+    
+                <div class="col-10 mt-5 mb-5 mx-auto d-block">
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username">
+                    </div>
+            
+                    <div class="mb-3">
+                        <label for="room" class="form-label">Email address</label>
+                        <input type="text" class="form-control" id="room">
+                    </div>
+    
+                    <button class="btn btn-primary mx-auto d-block button_home" id="login_room_submit" type="submit">Submit</button>
+    
+                </div>
+            
+            </div>
+            
+        </div>
+    </div>
+
+<script>
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+    $(document).ready(function() {
+
+        socket.on('connect',
+            function() {
+                console.log('Participant Connected')
+            });
+
+        socket.on('status',
+            function(data) {
+                console.log(data)
+
+                // add_input()
+            });
+
+        /* 
+        socket.on('message_response',
+            function(data) {
+                console.log(data)
+        });
+        */
+
+    })
+
+
+    /* 
+    function add_input() {
+        if (data) {
+
+            codeblock = `<form method="POST">
+                        <input class="form-control mb-3 mt-2" type="text" id="message" />
+                        <button id="messageSubmit" class="btn btn-primary">Submit</button>
+                    </form>`
+
+            $('.container').hide();
+
+            document.getElementById('#message_input').innerHTML = codeblock;
+        }
+    }
+    */
+
+    $('#login_room_submit').click(function(event) {
+
+        username = document.getElementById("username").value;
+        room = document.getElementById("room").value;
+
+        console.log(username, room);
+        event.preventDefault();
+        socket.emit('join', {
+            username: username,
+            room: room
+        })
+
+    })
+
+    /*
+    $('#messageSubmit').click(function(event) {
+
+        message = document.getElementById("message").value;
+
+        event.preventDefault();
+        socket.emit('message', {
+            message: message
+        })
+
+    })
+    */
+
+</script>
+
+{% endblock %}
