@@ -8,49 +8,90 @@ https://stackoverflow.com/questions/13772884/css-problems-with-flask-web-app
 
 '''
 
-from flask import Flask , render_template, request, redirect, url_for, session
+from flask import Flask , render_template, request, redirect, url_for, session, jsonify
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
 from flask_session import Session
 
 app = Flask(__name__)
 
-socketio = SocketIO(app)
+app.config['SECRET_KEY'] = 'secret'
+app.config['SESSION_TYPE'] = 'filesystem'
+
+Session(app)
+
+socketio = SocketIO(app, manage_session=False)
+
+participants=[]
 
 @app.route("/", methods = ['GET', 'POST'])
 def index():
     return render_template("home.html")
 
+@app.route("/room", methods = ['GET', 'POST'])
+def room():
+    
+    if(request.method=='POST'):
+
+        username = request.form['username']
+        room = request.form['room']
+        
+        session['username'] = username
+        session['room'] = room
+
+        participants.append(session)
+        
+        return render_template('room.html', session = session)
+    
+    else:
+        
+        if(session.get('username') is not None):
+        
+            return render_template('room.html', session = session)
+        
+        else:
+        
+            return redirect(url_for('index'))
+
+
+@app.route("/get/participants", methods = ['GET'])
+def get_participantss():
+    print(participants)
+
+# @app.route("/room/<room>", methods = ['GET', 'POST'])
+# def room(room):
+#     print(room)
+#     return render_template("room.html")
+
 @socketio.on('connect')
 def connected():
     print('connect')
 
-@socketio.on('join')
-def on_join(data):
+@socketio.on('join', namespace='/room')
+def join(data):
 
-    username = data['username']
-    room = data['room']
-    
-    session['username'] = username
-    session['room'] = room
+    # print('join')
+
+    room = session.get('room')
 
     join_room(room)
 
-    print(username, room)
-
     emit('status', { 'message':  session.get('username') + ' has entered the room.' }, room=room )
 
-# @socketio.on('message')
-# def message(json):
+@socketio.on('message', namespace='/room')
+def message(data):
 
-#     room = session.get('room')
+    # print(data)
 
-#     emit('message_response', { 'message': session.get('username') + ' : ' + message['msg']}, room=room)
+    room = session.get('room')
 
-@socketio.on('leave')
-def on_leave(data):
-    
-    username = data['username']
-    room = data['room']
+    emit('message_response', { 'message': session.get('username') + ' : ' + data['message']}, room=room)
+
+@socketio.on('leave', namespace='/room')
+def leave(data):
+
+    # print('leave')
+
+    room = session.get('room')
     
     leave_room(room)
 

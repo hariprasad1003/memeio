@@ -1,0 +1,97 @@
+{% extends "base.html" %} 
+
+{% block content %}
+
+    <link rel="stylesheet" href="{{url_for('static',filename='css/home.css')}}">
+
+    <link rel="stylesheet" href="/static/css/home.css">
+
+    <div class="global_cont_home">
+        
+        <div class="container mt-5">
+
+            <div class="card mx-auto d-block card_home">
+
+                <div class="card-title" id="participants_list">
+
+                    <div class="div" id="message_list">
+
+                    </div>
+
+                </div>
+    
+                <div class="col-10 mt-5 mb-5 mx-auto d-block">
+                    
+                    <div class="mb-3">
+
+                        <label for="username" class="form-label">Send message</label>
+                        <input type="text" class="form-control" id="message">
+
+                    </div>
+    
+                    <button class="btn btn-primary mx-auto d-block button_home" id="message_submit" type="submit">Submit</button>
+    
+                </div>
+            
+            </div>
+            
+        </div>
+
+    </div>
+
+<script>
+
+    var socket;
+    
+    $(document).ready(function() {
+
+        socket = io.connect('http://' + document.domain + ':' + location.port + "/room");
+
+        socket.on('connect',
+            function() {
+                console.log('Client Connected')
+                socket.emit('join', {});
+        });
+
+        socket.on('status',
+            function(data) {
+                console.log(data);
+                $('#participants_list').append(data['message'])
+        });
+
+
+        socket.on('message_response',
+            function(data) {
+                console.log(data);
+
+                $('#message_list').append(data['message'])
+                
+        });
+
+        $('#message_submit').click(function(event) {
+
+            message = document.getElementById("message").value;
+
+            console.log(message);
+
+            event.preventDefault();
+            socket.emit('message', {
+                'message' : message
+            })
+
+        })
+
+        
+    })
+
+    function leave_room() {
+        socket.emit('leave', {}, function() {
+            socket.disconnect();
+            window.location.href = "{{ url_for('index') }}";
+        });
+    }
+
+
+</script>
+
+{% endblock %}
