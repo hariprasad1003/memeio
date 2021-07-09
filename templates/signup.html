@@ -1,0 +1,39 @@
+{% extends "base.html" %} 
+
+{% block content %}
+        
+    <div class="container mt-5">
+
+        <form action="{{url_for('signup_post')}}" method="POST">
+
+            <div class="mb-3">
+
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" name="email" id="email">
+
+            </div>
+    
+
+            <div class="mb-3">
+
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" name="username" id="username">
+
+            </div>
+    
+            <div class="mb-3">
+
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" name="password" id="password">
+
+            </div>
+
+            <button class="btn btn-primary mx-auto d-block" type="submit">Submit</button>
+
+            <p>Already have an account? <a href="/login">Login Here</a></p>
+
+        </form>
+        
+    </div>
+
+{% endblock %}

@@ -8,23 +8,70 @@ https://stackoverflow.com/questions/13772884/css-problems-with-flask-web-app
 
 '''
 
-from flask import Flask , render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
 from flask_session import Session
+from flask_pymongo import PyMongo
+from decouple import config
+
+import business
 
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'secret'
 app.config['SESSION_TYPE'] = 'filesystem'
 
+app.config["MONGO_URI" ] = config("MONGO_URI")
+
 Session(app)
 
 socketio = SocketIO(app, manage_session=False)
+
+mongo  = PyMongo(app)
+users  = mongo.db.cio_users
 
 participants=[]
 
 @app.route("/", methods = ['GET', 'POST'])
 def index():
+    # return render_template("home.html")
+    return redirect(url_for("login_get"))
+
+@app.route("/login", methods = ['GET'])
+def login_get():
+    return render_template("login.html")
+
+@app.route("/login", methods = ['POST'])
+def login_post():
+
+    if(request.method=='POST'):
+
+        email    = request.form['email']
+        password = request.form['password']
+
+        result, error_message = business.login(email, password)
+
+        if(result == True):
+            
+            return render_template("home.html")
+
+        return render_template("login.html", error_message = error_message)
+
+@app.route("/signup", methods = ['GET'])
+def signup_get():
+    return render_template("signup.html")
+
+@app.route("/signup", methods = ['POST'])
+def signup_post():
+
+    if(request.method=='POST'):
+
+        email    = request.form['email']
+        username = request.form['username']
+        password = request.form['password']
+
+        business.signup(email, username, password)
+
     return render_template("home.html")
 
 @app.route("/room", methods = ['GET', 'POST'])
