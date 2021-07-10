@@ -8,8 +8,8 @@
 
             <div class="mb-3">
 
-                <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" name="email" id="email">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" name="username" id="username">
 
             </div>
     
@@ -22,7 +22,11 @@
 
             <button class="btn btn-primary mx-auto d-block">Login</button>
 
-            {{error_message}}
+            {% if error_message is not none %}
+
+                {{error_message}}
+
+            {% endif %}
 
             <p>Don't have an account? <a href="/signup">Signup Here</a></p>
 

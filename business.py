@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 from app import users
 import hashlib
 
-def signup(email, username, password):
+def signup(username, password):
 
     result        = None
     error_message = None
@@ -12,7 +12,6 @@ def signup(email, username, password):
     hash_password = password.hexdigest()
 
     result_dict = {
-        "email"     : email,
         "username"  : username,
         "password"  : hash_password
     }
@@ -30,7 +29,7 @@ def signup(email, username, password):
         error_message = "Oops! Something went wrong. Try again"
     
     
-def login(email, password):
+def login(username, password):
 
     result        = None
     error_message = None
@@ -39,17 +38,25 @@ def login(email, password):
 
     hash_password = password.hexdigest()
 
-    response = users.find_one({"email" : email})
-    
-    # print(response)
-    
-    # print(response["password"])
+    try:
 
-    if(hash_password == response["password"]):
+        response = users.find_one({"username" : username})
+    
+        print(response)
         
-        result = True
-    else:
-        error_message = "The password that you've entered is incorrect"        
+        print(response["password"])
+
+        if(hash_password == response["password"]):
+        
+            result = True
+        
+        else:
+
+            error_message = "The password that you've entered is incorrect" 
+
+    except:
+
+        error_message = "User not found! Create a New Account "
 
     return result, error_message
     

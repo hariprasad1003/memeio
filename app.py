@@ -5,6 +5,9 @@ author - Hari Prasad
 sources - 
 
 https://stackoverflow.com/questions/13772884/css-problems-with-flask-web-app
+https://www.javatpoint.com/flask-session
+https://stackoverflow.com/questions/26954122/how-can-i-pass-arguments-into-redirecturl-for-of-flask
+https://stackoverflow.com/questions/19614027/jinja2-template-variable-if-none-object-set-a-default-value
 
 '''
 
@@ -53,23 +56,39 @@ http://127.0.0.1:5000/login
 
 @app.route("/login", methods = ['GET'])
 def login_get():
-    return render_template("login.html")
+    return render_template("login.html", error_message = request.args.get('error_message'))
 
 @app.route("/login", methods = ['POST'])
 def login_post():
 
     if(request.method=='POST'):
 
-        email    = request.form['email']
+        username    = request.form['username']
         password = request.form['password']
 
-        result, error_message = business.login(email, password)
+        result, error_message = business.login(username, password)
 
         if(result == True):
             
-            return render_template("home.html")
+            session['user_session'] = username
+
+            return redirect(url_for('get_create_room'))
 
         return render_template("login.html", error_message = error_message)
+
+
+'''
+http://127.0.0.1:5000/logout
+'''
+
+@app.route("/logout")
+def logout():
+
+  if 'user_session' in session:  
+
+        session.pop('user_session', None)  
+
+        return redirect(url_for('home'));  
 
 '''
 http://127.0.0.1:5000/signup
@@ -84,13 +103,14 @@ def signup_post():
 
     if(request.method=='POST'):
 
-        email    = request.form['email']
         username = request.form['username']
         password = request.form['password']
 
-        business.signup(email, username, password)
+        session['user_session'] = username
 
-    return render_template("home.html")
+        business.signup(username, password)
+
+    return redirect(url_for('get_create_room'))
 
 '''
 http://127.0.0.1:5000/create/room
@@ -98,7 +118,17 @@ http://127.0.0.1:5000/create/room
 
 @app.route("/create/room", methods = ['GET'])
 def get_create_room():
-    return render_template("create_room.html")
+
+    if 'user_session' in session:
+
+        return render_template("create_room.html")
+     
+    else:
+
+        error_message = "Login Required!"
+
+        return redirect(url_for('login_get', error_message = error_message, **request.args))
+    
 
 @app.route("/create/room", methods = ['POST'])
 def post_create_room():
@@ -107,7 +137,9 @@ def post_create_room():
 
         room_name = request.form['room_name']
 
-        # print(room_name)
+        # room_type = request.form['room_type']
+
+        # print(room_name, room_type)
 
     return render_template("create_room.html")
 
