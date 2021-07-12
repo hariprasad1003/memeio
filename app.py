@@ -12,6 +12,7 @@ https://stackoverflow.com/questions/19614027/jinja2-template-variable-if-none-ob
 '''
 
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from werkzeug.utils import html
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
 from flask_session import Session
 from flask_pymongo import PyMongo
@@ -32,6 +33,7 @@ socketio = SocketIO(app, manage_session=False)
 
 mongo  = PyMongo(app)
 users  = mongo.db.cio_users
+rooms  = mongo.db.cio_rooms
 
 participants=[]
 
@@ -68,7 +70,7 @@ def login_post():
 
         result, error_message = business.login(username, password)
 
-        if(result == True):
+        if(result["status_code"] == 200):
             
             session['user_session'] = username
 
@@ -137,11 +139,21 @@ def post_create_room():
 
         room_name = request.form['room_name']
 
+        username  = session['user_session']
+        
+        result, error_message = business.create_room(room_name, username)
+
         # room_type = request.form['room_type']
 
         # print(room_name, room_type)
 
-    return render_template("create_room.html")
+        # print(result)
+
+        if(result["status_code"] == 200):
+
+            return render_template("pin.html", result = result)
+
+        return render_template("create_room.html", error_message = error_message)
 
 '''
 http://127.0.0.1:5000/room

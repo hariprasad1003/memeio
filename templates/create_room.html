@@ -26,6 +26,12 @@
 
             <button class="btn btn-primary mx-auto d-block">Create</button>
 
+            {% if error_message is not none %}
+
+                {{error_message}}
+
+            {% endif %}
+
             <a href="/logout"> Logout</a>
 
         </form>

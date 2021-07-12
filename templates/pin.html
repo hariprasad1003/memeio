@@ -1,0 +1,49 @@
+{% extends "base.html" %} 
+
+{% block content %}
+        
+    <div class="container mt-5">
+        
+        <h3>{{ result["room_name"] }} Room Created!</h3>
+
+        <p>Room Pin -  <span id="text">{{ result["room_pin"] }}</span></p>
+
+        <button id="copyButton" onclick="copyText('#text')">Copy</button>
+
+    </div>
+
+    <script>
+
+        function copyText(element){
+            
+            var change = document.getElementById("copyButton");
+            
+            if (change.innerHTML == "Copy")
+            {
+            
+                change.innerHTML = "Copied";
+            
+            }
+            else {
+            
+                change.innerHTML = "Copy";
+            
+            }
+            
+            console.log("Button Clicked")
+            
+            var $temp = $("<input>");
+            
+            $("body").append($temp);
+            
+            $temp.val($(element).text()).select();
+            
+            document.execCommand("copy");
+            
+            $temp.remove();
+        } 
+
+
+    </script>
+
+{% endblock %}
