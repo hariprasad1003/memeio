@@ -277,4 +277,4 @@ def leave(data):
     emit('status', { 'message':  session.get('user_session') + ' has left the room.' }, room=room )
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, host="0.0.0.0", debug=True, port=5000)
