@@ -1,0 +1,17 @@
+{% extends "base.html" %} 
+
+{% block content %}
+        
+    <div class="container mt-5">
+        
+        {% if error_message is not none %}
+
+            {{error_message}}
+
+        {% endif %}
+
+        <a href="/">Back to Home </a>
+        
+    </div>
+
+{% endblock %}

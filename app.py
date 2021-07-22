@@ -11,6 +11,7 @@ https://stackoverflow.com/questions/19614027/jinja2-template-variable-if-none-ob
 
 '''
 
+from types import resolve_bases
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from werkzeug.utils import html
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
@@ -41,16 +42,37 @@ participants=[]
 http://127.0.0.1:5000/
 '''
 
-@app.route("/", methods = ['GET', 'POST'])
-def home():
+@app.route("/", methods = ['GET'])
+def get_home():
+
+    return render_template("home.html")
+
+@app.route("/", methods = ['POST'])
+def post_home():
 
     if(request.method=='POST'):
 
+        name = request.form['username']
         room_pin = request.form['room_pin']
 
         # print(room_pin)
 
-    return render_template("home.html")
+        result = business.enter_room(name, room_pin)
+
+        print(result)
+
+        if(result["status_code"] == 200):
+
+            room_name = result["room_name"]
+
+            session['user_session'] = name
+            session['room'] = room_name
+            
+
+            return redirect(url_for('get_room'))
+
+        return jsonify(result)
+
 
 '''
 http://127.0.0.1:5000/login
@@ -68,7 +90,7 @@ def login_post():
         username    = request.form['username']
         password = request.form['password']
 
-        result, error_message = business.login(username, password)
+        result = business.login(username, password)
 
         if(result["status_code"] == 200):
             
@@ -76,7 +98,7 @@ def login_post():
 
             return redirect(url_for('get_create_room'))
 
-        return render_template("login.html", error_message = error_message)
+        return render_template("login.html", error_message = result['message'])
 
 
 '''
@@ -90,7 +112,7 @@ def logout():
 
         session.pop('user_session', None)  
 
-        return redirect(url_for('home'));  
+        return redirect(url_for('get_home'));  
 
 '''
 http://127.0.0.1:5000/signup
@@ -127,9 +149,14 @@ def get_create_room():
      
     else:
 
-        error_message = "Login Required!"
+        result = {
 
-        return redirect(url_for('login_get', error_message = error_message, **request.args))
+            "message"     : "Login Required!",
+            "status_code" : 401  
+        }
+        
+
+        return redirect(url_for('login_get', error_message = result['message'], **request.args))
     
 
 @app.route("/create/room", methods = ['POST'])
@@ -141,7 +168,7 @@ def post_create_room():
 
         username  = session['user_session']
         
-        result, error_message = business.create_room(room_name, username)
+        result = business.create_room(room_name, username)
 
         # room_type = request.form['room_type']
 
@@ -151,38 +178,56 @@ def post_create_room():
 
         if(result["status_code"] == 200):
 
-            return render_template("pin.html", result = result)
+            # room_name = result["room_name"]
 
-        return render_template("create_room.html", error_message = error_message)
+            render_template("pin.html", result = result)
+
+        return render_template("create_room.html", error_message = result['message'])
 
 '''
 http://127.0.0.1:5000/room
 '''
 
-@app.route("/room", methods = ['GET', 'POST'])
-def room():
-    
-    if(request.method=='POST'):
+@app.route("/room", methods = ['GET'])
+def get_room():
 
-        username = request.form['username']
-        room = request.form['room']
-        
-        session['username'] = username
-        session['room'] = room
+    if 'room' in session:
 
-        participants.append(session)
-        
-        return render_template('room.html', session = session)
+        return render_template('room.html')
+
+    result = {
+
+        "message"     : "It seems like, you don't have access to this room",
+        "status_code" : 401
     
-    else:
+    }
+
+    return render_template("error.html", error_message = result['message'])
+
+# @app.route("/room", methods = ['POST'])
+# def post_room():
+    
+#     if(request.method=='POST'):
+
+#         username = request.form['username']
+#         room = request.form['room']
         
-        if(session.get('username') is not None):
+#         session['username'] = username
+#         session['room'] = room
+
+#         participants.append(session)
         
-            return render_template('room.html', session = session)
+#         return render_template('room.html', session = session)
+    
+#     else:
         
-        else:
+#         if(session.get('username') is not None):
         
-            return redirect(url_for('index'))
+#             return render_template('room.html', session = session)
+        
+#         else:
+        
+#             return redirect(url_for('index'))
 
 
 @app.route("/get/participants", methods = ['GET'])
@@ -207,7 +252,7 @@ def join(data):
 
     join_room(room)
 
-    emit('status', { 'message':  session.get('username') + ' has entered the room.' }, room=room )
+    emit('status', { 'message':  session.get('user_session') + ' has entered the room.' }, room=room )
 
 @socketio.on('message', namespace='/room')
 def message(data):
@@ -216,7 +261,7 @@ def message(data):
 
     room = session.get('room')
 
-    emit('message_response', { 'message': session.get('username') + ' : ' + data['message']}, room=room)
+    emit('message_response', { 'message': session.get('user_session') + ' : ' + data['message']}, room=room)
 
 @socketio.on('leave', namespace='/room')
 def leave(data):
@@ -229,7 +274,7 @@ def leave(data):
 
     session.clear()
 
-    emit('status', { 'message':  session.get('username') + ' has left the room.' }, room=room )
+    emit('status', { 'message':  session.get('user_session') + ' has left the room.' }, room=room )
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
