@@ -153,7 +153,7 @@ def create_room(room_name, username):
         "user_id"     : user_id,
         "room_id"     : room_id,
         "room_name"   : room_name,
-        "room_pin"    : pin,
+        "room_pin"    : int(pin),
         "created_by"  : username,
         "created_at"  : date_time
     
@@ -208,6 +208,11 @@ def create_room(room_name, username):
 def enter_room(name, user_room_pin):
 
     result = None
+    db_room_pin = None
+    room_id     = None
+    room_name   = None
+    created_by  = None
+    created_at  = None
 
     # print(user_room_pin)
 
@@ -225,38 +230,39 @@ def enter_room(name, user_room_pin):
         created_by  = room["created_by"]
         created_at  = room["created_at"]
 
-
-
-        if(int(user_room_pin) == db_room_pin):
-        
-            result = {
-
-                "message"     : "Participant Entered Room Successfully",
-                "status_code" : 200,
-                "room_id"     : room_id, 
-                "room_name"   : room_name, 
-                "created_by"  : created_by, 
-                "created_at"  : created_at
-
-            }
-        
-        else:
-
-            result = {
-
-                "message"       : "The pin that you've entered is incorrect",
-                "status_code"   :  400
-            
-            }
-
     except:
 
-            result = {
+        result = {
 
-                "message"       : "Room not found! Create a New Room",
-                "status_code"   :  404
-            
-            }
+            "message"       : "Oops! Something went wrong. Try again",
+            "status_code"   :  400
+        
+        }
+
+
+    if(int(user_room_pin) == db_room_pin):
+    
+        result = {
+
+            "message"     : "Participant Entered Room Successfully",
+            "status_code" : 200,
+            "room_id"     : room_id, 
+            "room_name"   : room_name, 
+            "created_by"  : created_by, 
+            "created_at"  : created_at
+
+        }
+        
+    else:
+
+        result = {
+
+            "message"       : "The pin that you've entered is incorrect",
+            "status_code"   :  400
+        
+        }
+
+
 
     return result
 

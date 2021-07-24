@@ -23,6 +23,8 @@ import business
 
 app = Flask(__name__)
 
+app.static_folder = 'static'
+
 app.config['SECRET_KEY'] = 'secret'
 app.config['SESSION_TYPE'] = 'filesystem'
 
@@ -36,7 +38,7 @@ mongo  = PyMongo(app)
 users  = mongo.db.cio_users
 rooms  = mongo.db.cio_rooms
 
-participants=[]
+# participants=[]
 
 '''
 http://127.0.0.1:5000/
@@ -45,7 +47,7 @@ http://127.0.0.1:5000/
 @app.route("/", methods = ['GET'])
 def get_home():
 
-    return render_template("home.html")
+    return render_template("home.html", error_message = None)
 
 @app.route("/", methods = ['POST'])
 def post_home():
@@ -59,9 +61,9 @@ def post_home():
 
         result = business.enter_room(name, room_pin)
 
-        print(result)
+        # print(result)
 
-        if(result["status_code"] == 200):
+        if(int(result["status_code"]) == 200):
 
             room_name = result["room_name"]
 
@@ -71,7 +73,7 @@ def post_home():
 
             return redirect(url_for('get_room'))
 
-        return jsonify(result)
+        return render_template("home.html", error_message = result['message'])
 
 
 '''
@@ -80,7 +82,7 @@ http://127.0.0.1:5000/login
 
 @app.route("/login", methods = ['GET'])
 def login_get():
-    return render_template("login.html", error_message = request.args.get('error_message'))
+    return render_template("login.html", error_message = None)
 
 @app.route("/login", methods = ['POST'])
 def login_post():
@@ -88,11 +90,17 @@ def login_post():
     if(request.method=='POST'):
 
         username    = request.form['username']
-        password = request.form['password']
+        password    = request.form['password']
+
+        # print(username, password)
 
         result = business.login(username, password)
 
-        if(result["status_code"] == 200):
+        # print(result)
+
+        # print(int(result["status_code"]))
+
+        if(int(result["status_code"]) == 200):
             
             session['user_session'] = username
 
@@ -143,6 +151,8 @@ http://127.0.0.1:5000/create/room
 @app.route("/create/room", methods = ['GET'])
 def get_create_room():
 
+    # print("get_create_room")
+
     if 'user_session' in session:
 
         return render_template("create_room.html")
@@ -156,8 +166,9 @@ def get_create_room():
         }
         
 
-        return redirect(url_for('login_get', error_message = result['message'], **request.args))
+        # return redirect(url_for('login_get', error_message = result['message'], **request.args))
     
+        return render_template("login.html", error_message = result['message'])
 
 @app.route("/create/room", methods = ['POST'])
 def post_create_room():
@@ -167,6 +178,8 @@ def post_create_room():
         room_name = request.form['room_name']
 
         username  = session['user_session']
+
+        # print(room_name, username)
         
         result = business.create_room(room_name, username)
 
@@ -176,11 +189,13 @@ def post_create_room():
 
         # print(result)
 
-        if(result["status_code"] == 200):
+        # print(int(result["status_code"]))
+
+        if(int(result["status_code"]) == 200):
 
             # room_name = result["room_name"]
 
-            render_template("pin.html", result = result)
+            return render_template("pin.html", result = result)
 
         return render_template("create_room.html", error_message = result['message'])
 
@@ -232,7 +247,10 @@ def get_room():
 
 @app.route("/get/participants", methods = ['GET'])
 def get_participantss():
-    print(participants)
+
+    # print(participants)
+
+    pass
 
 # @app.route("/room/<room>", methods = ['GET', 'POST'])
 # def room(room):
@@ -268,13 +286,15 @@ def leave(data):
 
     # print('leave')
 
+    username = session.get('user_session')
+
     room = session.get('room')
     
     leave_room(room)
 
     session.clear()
 
-    emit('status', { 'message':  session.get('user_session') + ' has left the room.' }, room=room )
+    emit('status', { 'message': username  + ' has left the room.' }, room=room )
 
 if __name__ == '__main__':
-    socketio.run(app, host="0.0.0.0", debug=True, port=5000)
+    socketio.run(app, debug=True)

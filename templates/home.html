@@ -1,33 +1,72 @@
 {% extends "base.html" %} 
 
 {% block content %}
+
+        <!-- static/css/home.css -->
+
+        <link rel="stylesheet" href="{{url_for('static', filename='css/style_home.css')}}">
+
+        <div class="container mt-5 container-div">
+
+            <div class="row">
+
+                <div class="card col align-self-center">
+                    
+                    <div class="container mt-4">
+
+                        {% if error_message is not none %}
+
+                            <div class="alert alert-danger" role="alert">
+                
+                                {{error_message}}
+                
+                            </div>
+                
+
+                        {% endif %}
+                
+                        <form action="/" method="POST">
+            
+                            <div class="mb-3">
+            
+                                <label for="username" class="form-label">Name</label>
+                                <input type="text" class="form-control" name="username" id="username">
+            
+                            </div>
+                    
+                            <div class="mb-3">
+            
+                                <label for="room_pin" class="form-label">Room PIN</label>
+                                <input type="text" class="form-control" name="room_pin" id="room_pin">
+            
+                            </div>
+
+                            <div class="row justify-content-evenly mb-3">
+                                
+                                <div class="col-4">
+
+                                    <button style="width: 8.5rem;" class="btn btn-success mx-auto d-block mt-3 mb-3">Enter</button>
+
+                                </div>
+                                
+                                <div class="col-4">
+
+                                    <a style="width: 8.5rem;" class="btn btn-primary mx-auto d-block mt-3 mb-3" href="/create/room">Create Room</a>
+
+
+                                </div>
+
+                            </div>
         
-        <div class="container mt-5">
-
-            <form action="/" method="POST">
-
-                <div class="mb-3">
-
-                    <label for="username" class="form-label">Name</label>
-                    <input type="text" class="form-control" name="username" id="username">
-
-                </div>
-        
-                <div class="mb-3">
-
-                    <label for="room_pin" class="form-label">Room PIN</label>
-                    <input type="text" class="form-control" name="room_pin" id="room_pin">
-
+                        </form>
+    
+                    </div>
+    
                 </div>
 
-                <button class="btn btn-primary mx-auto d-block">Enter</button>
+            </div>
 
-                <p>Create a New Room <a href="/create/room">Create Room</a></p>
+        </div>
 
-                </div>
-
-            </form>
-
-    </div>
 
 {% endblock %}
