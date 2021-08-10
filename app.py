@@ -8,6 +8,7 @@ https://stackoverflow.com/questions/13772884/css-problems-with-flask-web-app
 https://www.javatpoint.com/flask-session
 https://stackoverflow.com/questions/26954122/how-can-i-pass-arguments-into-redirecturl-for-of-flask
 https://stackoverflow.com/questions/19614027/jinja2-template-variable-if-none-object-set-a-default-value
+https://stackoverflow.com/questions/63043491/convert-utc-timezone-to-ist-python
 
 '''
 
@@ -18,7 +19,8 @@ from flask_socketio import SocketIO, send, emit, join_room, leave_room
 from flask_session import Session
 from flask_pymongo import PyMongo
 from decouple import config
-
+from datetime import datetime
+import pytz
 import business
 
 app = Flask(__name__)
@@ -27,7 +29,6 @@ app.static_folder = 'static'
 
 app.config['SECRET_KEY'] = 'secret'
 app.config['SESSION_TYPE'] = 'filesystem'
-
 app.config["MONGO_URI" ] = config("MONGO_URI")
 
 Session(app)
@@ -39,6 +40,16 @@ users  = mongo.db.cio_users
 rooms  = mongo.db.cio_rooms
 
 # participants=[]
+
+def get_time():
+
+    tz = pytz.timezone('Asia/Kolkata')
+
+    datetime_ny = datetime.now(tz)  
+
+    time = datetime_ny.strftime("%H:%M:%S")
+
+    return time
 
 '''
 http://127.0.0.1:5000/
@@ -57,7 +68,7 @@ def post_home():
         name = request.form['username']
         room_pin = request.form['room_pin']
 
-        # print(room_pin)
+        # print(name, room_pin)
 
         result = business.enter_room(name, room_pin)
 
@@ -66,10 +77,15 @@ def post_home():
         if(int(result["status_code"]) == 200):
 
             room_name = result["room_name"]
+            acc_type  = result["acc_type"]
+
+            # print(room_name, acc_type)
 
             session['user_session'] = name
             session['room'] = room_name
-            
+            session['acc_type'] = acc_type
+
+            # print(session.get('user_session'), session.get('room'), session.get('acc_type'))
 
             return redirect(url_for('get_room'))
 
@@ -208,41 +224,30 @@ def get_room():
 
     if 'room' in session:
 
-        return render_template('room.html')
+        room = session.get('room')
 
-    result = {
+        acc_type = session.get('acc_type')
 
-        "message"     : "It seems like, you don't have access to this room",
-        "status_code" : 401
-    
-    }
+        # print(room, acc_type)
 
-    return render_template("error.html", error_message = result['message'])
+        if acc_type=="admin":
 
-# @app.route("/room", methods = ['POST'])
-# def post_room():
-    
-#     if(request.method=='POST'):
+            return render_template('admin.html')
 
-#         username = request.form['username']
-#         room = request.form['room']
-        
-#         session['username'] = username
-#         session['room'] = room
+        else:
 
-#         participants.append(session)
-        
-#         return render_template('room.html', session = session)
-    
-#     else:
-        
-#         if(session.get('username') is not None):
-        
-#             return render_template('room.html', session = session)
-        
-#         else:
-        
-#             return redirect(url_for('index'))
+            return render_template('user.html')
+
+    else:
+
+        result = {
+
+            "message"     : "It seems like, you don't have access to this room",
+            "status_code" : 401
+
+        }
+
+        return render_template("error.html", error_message = result['message'])
 
 
 @app.route("/get/participants", methods = ['GET'])
@@ -252,16 +257,11 @@ def get_participantss():
 
     pass
 
-# @app.route("/room/<room>", methods = ['GET', 'POST'])
-# def room(room):
-#     print(room)
-#     return render_template("room.html")
-
 @socketio.on('connect')
 def connected():
     print('connect')
 
-@socketio.on('join', namespace='/room')
+@socketio.on('join')
 def join(data):
 
     # print('join')
@@ -270,31 +270,60 @@ def join(data):
 
     join_room(room)
 
-    emit('status', { 'message':  session.get('user_session') + ' has entered the room.' }, room=room )
+    result_dict = {
 
-@socketio.on('message', namespace='/room')
+        "username"  : session.get('user_session'),
+        "room"      : room,
+        "message"   : "has entered the room"
+    
+    }
+
+    # print(result_dict)
+
+    socketio.emit('status', result_dict)
+
+@socketio.on('message')
 def message(data):
 
     # print(data)
 
     room = session.get('room')
 
-    emit('message_response', { 'message': session.get('user_session') + ' : ' + data['message']}, room=room)
+    result_dict = {
 
-@socketio.on('leave', namespace='/room')
+        "username"  : session.get('user_session'),
+        "room"      : room,
+        "message"   : data['message'],
+        "time"      : get_time()
+    
+    }
+    
+    # print(result_dict)
+    
+    socketio.emit('message_response', result_dict)
+
+@socketio.on('leave')
 def leave(data):
 
     # print('leave')
 
-    username = session.get('user_session')
+    # username = session.get('user_session')
 
     room = session.get('room')
     
     leave_room(room)
 
+    result_dict = {
+
+        "username"  : session.get('user_session'),
+        "room"      : room,
+        "message"   : "had left the room"
+    
+    }
+
     session.clear()
 
-    emit('status', { 'message': username  + ' has left the room.' }, room=room )
+    emit('status', result_dict )
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

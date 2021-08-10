@@ -1,0 +1,125 @@
+{% extends "base.html" %} 
+
+{% block content %}
+
+    <div class="container mt-5">
+
+        <div class="row">
+
+            <div class="card col align-self-center">
+                    
+                <div class="container mt-4">
+
+                    <div class="card-title">
+
+                        <div class="row justify-content-between">
+                            
+                            <div class="col-4" id="room_name">
+                            
+                            </div>
+                            
+                            <div class="col-4" style="margin-left: -60px;">
+                            
+                                <a style="width: 8.5rem;" class="btn btn-danger" onclick=leave_room()>Leave Room</a>
+                            
+                            </div>
+                        
+                        </div>
+                        
+                        <div class="meme_div" style="height: 50vh;">
+
+
+                        </div>
+                        
+                    </div>
+
+                </div>
+                
+            </div>
+            
+        </div>
+        
+    </div>
+
+
+    <script>
+
+        var socket;
+        
+        $(document).ready(function() {
+
+            socket = io.connect('http://' + document.domain + ':' + location.port);
+
+            socket.on('connect',
+                function() {
+                    
+                    console.log('Client Connected')
+                    
+                    socket.emit('join', {});
+            });
+
+            socket.on('status',
+                function(data) {
+                    
+                    // console.log(data);
+
+                    // console.log(data["username"], data["room"])
+
+                    document.getElementById("room_name").innerHTML = `
+                    
+                    <i class="fas fa-users"></i>
+
+                    ${data['room']}
+                    
+                    `;
+
+                    // var message = `${data['username']} ${data['message']} `;
+
+                    // $('#participants_div').append(message)
+            });
+
+
+            socket.on('message_response',
+                function(data) {
+
+                    // console.log(data);
+
+                    // console.log(data["username"], data["room"], data["message"])
+
+                    // console.log(data["message"])
+
+                    // var message = `${data['username']} : ${data['message']} ${data['time']}`
+
+                    // var message = `${data['username']} : ${data['message']}`
+
+                    // $('#meme_div').append(message)
+
+                    if( typeof data["message"] !== 'undefined' ) {
+                    
+                        $('div.meme_div').html($('<img>').attr('src', data["message"])).show();
+
+                    }
+                                        
+            });
+
+            
+        })
+
+        function leave_room() {
+
+            socket.emit('leave', {}, function() {
+
+                socket.disconnect();
+
+                window.location.href = "{{ url_for('get_home') }}";
+
+            });
+
+        }
+
+
+    </script>
+
+
+
+{% endblock %}

@@ -241,6 +241,14 @@ def enter_room(name, user_room_pin):
 
 
     if(int(user_room_pin) == db_room_pin):
+
+        if(str(name) == str(created_by)):
+
+            acc_type = "admin"
+
+        else:
+
+            acc_type = "user"
     
         result = {
 
@@ -249,7 +257,8 @@ def enter_room(name, user_room_pin):
             "room_id"     : room_id, 
             "room_name"   : room_name, 
             "created_by"  : created_by, 
-            "created_at"  : created_at
+            "created_at"  : created_at,
+            "acc_type"    : acc_type
 
         }
         

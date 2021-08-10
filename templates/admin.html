@@ -1,0 +1,182 @@
+{% extends "base.html" %} 
+
+{% block content %}
+            
+        <div class="container mt-5">
+
+            <div class="row">
+
+                <div class="card col align-self-center">
+                        
+                    <div class="container mt-4">
+
+                        <div class="card-title">
+
+                            <div class="row justify-content-between">
+                                
+                                <div class="col-4" id="room_name">
+                                
+                                </div>
+                                
+                                <div class="col-4" style="margin-left: -60px;">
+                                
+                                    <a style="width: 8.5rem;" class="btn btn-danger" onclick=leave_room()>Leave Room</a>
+                                
+                                </div>
+                            
+                            </div>
+                            
+                            <div id="meme_div" style="height: 50vh;">
+
+
+                            </div>
+                                    
+                                    
+                            <div class="mb-3">
+
+                                <div class="row">
+                                    
+                                    <div class="col-8">
+
+                                        <input type="file" id="files" class="form-control" accept="image/*" aria-describedby="message_submit" aria-label="Upload"/>
+
+                                    </div>
+
+                                    <div class="col-4">
+
+                                        <button id="message_submit" style="width: 8.5rem;" type="submit" class="btn btn-primary">Send</button>
+
+                                    </div>
+                                
+                                </div>
+                        
+                            </div>
+
+                        </div>
+
+                    </div>
+                    
+                </div>
+                
+            </div>
+            
+        </div>
+
+
+        <script>
+
+            var socket;
+            
+            $(document).ready(function() {
+
+                socket = io.connect('http://' + document.domain + ':' + location.port);
+
+                socket.on('connect',
+                    function() {
+                        
+                        console.log('Client Connected')
+                        
+                        socket.emit('join', {});
+                });
+
+                socket.on('status',
+                    function(data) {
+                        
+                        // console.log(data);
+
+                        // console.log(data["username"], data["room"])
+
+                        document.getElementById("room_name").innerHTML = `
+                        
+                        <i class="fas fa-users"></i>
+
+                        ${data['room']}
+                        
+                        `;
+
+                        // var message = `${data['username']} ${data['message']} `;
+
+                        // $('#participants_div').append(message)
+                });
+
+                // For Testing
+
+                socket.on('message_response',
+                    function(data) {
+
+                        // console.log(data);
+
+                        // console.log(data["username"], data["room"], data["message"])
+
+                        // var message = `${data['username']} : ${data['message']} ${data['time']}`
+
+                        // var message = `${data['username']} : ${data['message']}`
+
+                        // $('#meme_div').append(message)
+                        
+                        // $('div.meme_div').html($('<img>').attr('src', data["message"])).show();
+                                        
+                });
+
+
+                document.getElementById('files').addEventListener('change', handleFileSelect, false);
+            
+                function handleFileSelect(ele){
+                    
+                    var file = ele.target.files[0];
+                    
+                    var fileReader = new FileReader();
+                    
+                    fileReader.readAsDataURL(file)
+                    
+                    fileReader.onload = () => {
+                    
+                        var arrayBuffer = fileReader.result;
+
+                        // console.log(arrayBuffer)
+                    
+                        $('#message_submit').click(function(event) {
+                    
+                            //event.preventDefault()
+                    
+                            //let img = $('input#files' ).val()
+                    
+                            socket.emit( 'message', {
+                    
+                                /*
+                    
+                                nameImg : file.name,
+                                typeImg : file.type,
+                                sizeImg : file.size,
+                    
+                                */
+                    
+                                "message" : arrayBuffer
+                    
+                            })
+                    
+                            //$( 'input.image-container' ).val( '' ).focus()
+                    
+                        })
+                    }
+                }
+
+                
+            })
+
+            function leave_room() {
+
+                socket.emit('leave', {}, function() {
+
+                    socket.disconnect();
+
+                    window.location.href = "{{ url_for('get_home') }}";
+
+                });
+
+            }
+
+
+        </script>
+
+{% endblock %}
