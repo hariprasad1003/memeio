@@ -6,6 +6,8 @@
 
 
     </style>
+
+
             
         <div class="container mt-5">
 
@@ -22,12 +24,8 @@
                                 <div class="col-6" id="room_name">
                                 
                                 </div>
-                                
-                                <div class="col-3">
-                                
-                                    <a style="width: 8.5rem;" class="btn btn-danger" onclick=leave_room()>Leave Room</a>
-                                
-                                </div>
+
+                                <a style="width: 8.5rem;" class="btn btn-danger pull-right" onclick=leave_room()>Leave Room</a>
                             
                             </div>
                             
@@ -87,7 +85,7 @@
                 socket.on('status',
                     function(data) {
                         
-                        // console.log(data);
+                        console.log(data);
 
                         // console.log(data["username"], data["room"])
 
